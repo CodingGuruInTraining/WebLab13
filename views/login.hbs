@@ -1,0 +1,19 @@
+<h1>Top secret website</h1>
+
+<h2>Please log in here</h2>
+
+<ul>
+    {{#each messages}}
+        <li>{{this}}</li>
+    {{/each}}
+</ul>
+
+<form action="/login" method="POST">
+    Username: <input type="text" name="username" required>
+    <br>
+    Password: <input type="password" name="password" required>
+    <br>
+    <input type="submit" name="login" value="Log in">
+</form>
+
+<p>If you don't have an account, you can <a href="/signup">sign up here</a>.</p>
