@@ -19,9 +19,11 @@ router.post('/signup', passport.authenticate('local-signup', {
     failureFlash: true
 }));
 
-// GET - secret page
+// GET - secret page    (isLoggedIn is some kind of middleware)
 router.get('/secret', isLoggedIn, function(req, res, next) {
-    res.render('secret', {username: req.user.local.username});
+    res.render('secret', {username: req.user.local.username,
+        signupDate: req.user.signupDate,
+        favorites: req.user.favorites});
 });
 
 // GET - login page
@@ -41,6 +43,39 @@ router.get('/logout', function(req, res, next) {
     // passport middleware adds logout function to req object
     req.logout();
     res.redirect('/');
+});
+
+router.post('/saveSecrets', isLoggedIn, function(req, res, next) {
+    // Check if user provided any new data.
+    if (!req.body.color && !req.body.luckyNumber) {
+        req.flash('updateMsg', 'Please enter some new data');
+        return res.redirect('/secret')
+    }
+    // Collect updated data from req.body and add to req.user
+    if (req.body.color) {
+        req.user.favorites.color = req.body.color;
+    }
+    if (req.body.luckyNumber) {
+        req.user.favorites.luckyNumber = req.body.luckyNumber;
+    }
+
+    // Save modified user with new data
+    req.user.save(function(err) {
+        if (err) {
+            if (err.name == 'ValidationError') {
+                req.flash('updateMsg', 'Error updating, check your data is valid');
+            }
+            else {
+                return next(err);
+            }
+        }
+        else {
+            req.flash('updateMsg', 'Updated data');
+        }
+
+        // Will have updated data upon redirect
+        return res.redirect('/secret');
+    })
 });
 
 function isLoggedIn(req, res, next) {
