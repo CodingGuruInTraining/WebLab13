@@ -8,6 +8,7 @@ var session = require('express-session');
 var passport = require('passport');
 var flash = require('express-flash');
 var mongoose = require('mongoose');
+var MongoDBStore = require('connect-mongodb-session')(session);
 
 var index = require('./routes/index');
 var users = require('./routes/users');
@@ -26,10 +27,14 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+var url = 'mongodb://localhost:27017/secret';
+var session_url = 'mongodb://localhost:27017/secret_sessions';
+
 app.use(session({
     secret: 'replace me with long random string',
     resave: true,
-    saveUninitialized: true
+    saveUninitialized: true,
+    store: new MongoDBStore( { url: session_url })
 }));
 
 require('./config/passport')(passport);
