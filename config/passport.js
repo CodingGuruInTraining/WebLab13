@@ -1,4 +1,8 @@
 var LocalStrategy = require('passport-local');
+var TwitterStrategy = require('passport-twitter');
+
+var configAuth = require('./auth');
+
 var User = require('../models/user');
 
 module.exports = function(passport) {
@@ -48,6 +52,37 @@ module.exports = function(passport) {
                     return done(null, false, req.flash('loginMsg', 'Password incorrect'));
                 }
                 return done(null, user);
+            });
+        });
+    }));
+
+    passport.use(new TwitterStrategy({
+        consumerKey: configAuth.twitterAuth.consumerKey,
+        consumerSecret: configAuth.twitterAuth.consumerSecret,
+        callbackUrl: configAuth.twitterAuth.callbackUrl
+    }, function(token, tokenSecret, profile, done) {
+        process.nextTick(function() {
+            User.findOne({ 'twitter.id': profile.id }, function(err, user) {
+                if (err) {
+                    return done(err);
+                }
+                // If found user with this ID
+                if (user) {
+                    return done(null, user);
+                }
+                // No user found, creating new one
+                var newUser = new User();
+                newUser.twitter.id = profile.id;
+                newUser.twitter.token = token;
+                newUser.twitter.username = profile.username;
+                newUser.twitter.displayName = profile.displayName;
+
+                newUser.save(function(err) {
+                    if (err) {
+                        return done(err);
+                    }
+                    return done(null, newUser);
+                });
             });
         });
     }));
